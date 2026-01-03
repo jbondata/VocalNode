@@ -89,3 +89,4 @@ python3 -m src.main
 - Run as Administrator if hotkeys don't work
 - Grant microphone permissions in Windows Settings
 
+

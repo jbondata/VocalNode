@@ -149,3 +149,4 @@ Then:
 4. Press hotkey → speak → press hotkey
 5. Verify text appears
 
+

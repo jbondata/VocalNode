@@ -14,3 +14,4 @@ fi
 # Run the application
 python3 run.py "$@"
 
+

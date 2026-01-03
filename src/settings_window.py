@@ -154,9 +154,16 @@ class SettingsWindow(QWidget):
                 font-weight: bold;
             }
         """)
+        # Ensure window is active and focused
+        self.raise_()
+        self.activateWindow()
+        self.setFocus()
         self.key_capture_button.setFocus()
         # Install event filter to capture keys
-        self.installEventFilter(self)
+        # Install on the application to catch all key events
+        from PyQt6.QtWidgets import QApplication
+        QApplication.instance().installEventFilter(self)
+        print("[DEBUG] Key capture started - press any key now")
     
     def eventFilter(self, obj, event):
         """Filter events to capture key presses."""
@@ -164,8 +171,12 @@ class SettingsWindow(QWidget):
             key = event.key()
             modifiers = event.modifiers()
             
+            print(f"[DEBUG] Key captured: key={key}, modifiers={modifiers}")
+            
             # Convert Qt key to string representation
             key_str = self._qt_key_to_string(key, modifiers)
+            
+            print(f"[DEBUG] Converted to string: {key_str}")
             
             if key_str:
                 self.captured_key = key_str
@@ -199,7 +210,10 @@ class SettingsWindow(QWidget):
                     }
                 """)
                 self.capturing_key = False
-                self.removeEventFilter(self)
+                # Remove event filter from application
+                from PyQt6.QtWidgets import QApplication
+                QApplication.instance().removeEventFilter(self)
+                print(f"[DEBUG] Key capture complete: {display}")
                 return True
         
         return super().eventFilter(obj, event)

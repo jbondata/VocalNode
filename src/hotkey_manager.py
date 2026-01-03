@@ -4,9 +4,13 @@ import platform
 import threading
 import json
 import time
+import os
 from typing import Optional, Callable
 from pynput import keyboard
 from pynput.keyboard import Key, KeyCode
+
+# Detect Wayland
+IS_WAYLAND = os.environ.get('XDG_SESSION_TYPE', '').lower() == 'wayland'
 
 # #region agent log
 DEBUG_LOG_PATH = "/home/jb/dev/VocalNode/.cursor/debug.log"
@@ -127,8 +131,10 @@ class HotkeyManager:
         """Handle key press event."""
         # Log ALL key presses to verify listener is working
         # #region agent log
-        _debug_log("debug-session", "run1", "H1", "hotkey_manager.py:_on_press:entry", "Key press event received", {"key": str(key), "key_type": type(key).__name__, "hotkey_key": str(self.hotkey_key), "hotkey_key_type": type(self.hotkey_key).__name__, "is_pressed": self.is_pressed, "mode": self.mode})
+        _debug_log("debug-session", "run1", "H1", "hotkey_manager.py:_on_press:entry", "Key press event received", {"key": str(key), "key_type": type(key).__name__, "hotkey_key": str(self.hotkey_key), "hotkey_key_type": type(self.hotkey_key).__name__, "is_pressed": self.is_pressed, "mode": self.mode, "is_wayland": IS_WAYLAND})
         # #endregion
+        # Also print to console for immediate visibility
+        print(f"[HOTKEY DEBUG] Key pressed: {key} (listener is receiving events!)")
         try:
             # Track modifier keys
             if key in [Key.ctrl, Key.ctrl_l, Key.ctrl_r, Key.alt, Key.alt_l, Key.alt_r,
@@ -249,8 +255,16 @@ class HotkeyManager:
             True if started successfully
         """
         # #region agent log
-        _debug_log("debug-session", "run1", "H1", "hotkey_manager.py:start:entry", "Starting hotkey listener", {"listener_exists": self.listener is not None, "hotkey_key": str(self.hotkey_key), "hotkey_modifiers": [str(m) for m in self.hotkey_modifiers]})
+        _debug_log("debug-session", "run1", "H1", "hotkey_manager.py:start:entry", "Starting hotkey listener", {"listener_exists": self.listener is not None, "hotkey_key": str(self.hotkey_key), "hotkey_modifiers": [str(m) for m in self.hotkey_modifiers], "is_wayland": IS_WAYLAND})
         # #endregion
+        
+        if IS_WAYLAND:
+            # #region agent log
+            _debug_log("debug-session", "run1", "H1", "hotkey_manager.py:start:wayland_detected", "Wayland detected - pynput may not work", {"session_type": os.environ.get('XDG_SESSION_TYPE', 'unknown')})
+            # #endregion
+            print("WARNING: Wayland detected. pynput keyboard listener may not work properly.")
+            print("Consider using X11 or installing 'keyboard' library for better Wayland support.")
+        
         if self.listener is not None:
             # #region agent log
             _debug_log("debug-session", "run1", "H1", "hotkey_manager.py:start:already_running", "Listener already running")
@@ -259,11 +273,12 @@ class HotkeyManager:
         
         try:
             # #region agent log
-            _debug_log("debug-session", "run1", "H1", "hotkey_manager.py:start:before_listener", "Before creating keyboard.Listener")
+            _debug_log("debug-session", "run1", "H1", "hotkey_manager.py:start:before_listener", "Before creating keyboard.Listener", {"is_wayland": IS_WAYLAND})
             # #endregion
             self.listener = keyboard.Listener(
                 on_press=self._on_press,
-                on_release=self._on_release
+                on_release=self._on_release,
+                suppress=False  # Don't suppress keys, just listen
             )
             # #region agent log
             _debug_log("debug-session", "run1", "H1", "hotkey_manager.py:start:listener_created", "Listener created, starting")
@@ -273,16 +288,23 @@ class HotkeyManager:
             _debug_log("debug-session", "run1", "H1", "hotkey_manager.py:start:listener_started", "Listener started", {"listener_alive": self.listener.is_alive(), "listener_running": self.listener.running if hasattr(self.listener, 'running') else 'unknown'})
             # #endregion
             # Verify listener is actually running after a brief moment
-            import time
-            time.sleep(0.1)
+            time.sleep(0.2)  # Give it more time
             # #region agent log
-            _debug_log("debug-session", "run1", "H1", "hotkey_manager.py:start:listener_verified", "Listener verified", {"listener_alive": self.listener.is_alive(), "listener_running": self.listener.running if hasattr(self.listener, 'running') else 'unknown'})
+            _debug_log("debug-session", "run1", "H1", "hotkey_manager.py:start:listener_verified", "Listener verified", {"listener_alive": self.listener.is_alive(), "listener_running": self.listener.running if hasattr(self.listener, 'running') else 'unknown', "is_wayland": IS_WAYLAND})
             # #endregion
+            
+            # Test if listener is actually receiving events
+            if IS_WAYLAND:
+                print("NOTE: On Wayland, you may need to:")
+                print("  1. Install 'keyboard' library: pip install keyboard")
+                print("  2. Or switch to X11 session")
+                print("  3. Or use the tray icon menu to start/stop dictation")
+            
             return True
         except Exception as e:
             print(f"Error starting hotkey listener: {e}")
             # #region agent log
-            _debug_log("debug-session", "run1", "H1", "hotkey_manager.py:start:exception", "Exception starting listener", {"error": str(e), "type": type(e).__name__})
+            _debug_log("debug-session", "run1", "H1", "hotkey_manager.py:start:exception", "Exception starting listener", {"error": str(e), "type": type(e).__name__, "is_wayland": IS_WAYLAND})
             # #endregion
             return False
     

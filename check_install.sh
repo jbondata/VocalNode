@@ -40,3 +40,4 @@ else
     echo "Run: venv/bin/pip install -r requirements.txt"
 fi
 
+
