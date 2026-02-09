@@ -2,6 +2,8 @@
 
 A cross-platform speech-to-text dictation tool that works on Linux, Windows, and macOS. Similar to Whisper Flow, VocalNode allows you to freely hold or toggle a customizable keybind to dictate text into any active application window.
 
+**Status:** In Progress / Prototype
+
 ## Features
 
 - **Cross-platform**: Works on Linux, Windows, and macOS
@@ -121,7 +123,7 @@ The application will appear in your system tray (look for the microphone icon).
 
 ### Stopping the Application
 
-- Right-click the tray icon → "Quit"
+- Right-click the tray icon to "Quit"
 - Or from terminal: `pkill -f "python.*run.py"`
 
 ## Configuration
@@ -218,4 +220,3 @@ MIT License
 
 - Uses [faster-whisper](https://github.com/guillaumekln/faster-whisper) for speech-to-text
 - Built with PyQt6 for cross-platform GUI
-
